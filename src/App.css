@@ -1,0 +1,86 @@
+.App {
+  text-align: center;
+}
+
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.form-container, .big-container {
+  max-width: 35rem;
+  margin: 2rem auto;
+  padding: 1rem;
+  background-color: slategray;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px -12px rgba(0,0,0,0.25);
+}
+
+.submit-button {
+  margin-bottom: 2rem;
+}
+
+.q-box-container {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: black
+}
+
+.q-box {
+  appearance: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem;
+  width: 90%;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  color: black;
+  line-height: 1.25;
+}
+
+.csv-block{
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: black;
+}
+
+.submit-box{
+  background-color: lightcyan;
+  color: black;
+  font-weight: bold;
+  padding: .5rem .5rem;
+  border-radius: 0.25rem;
+  text-align: center;
+}
+
+.result-box {
+  color: black;
+  font-weight: bold;
+}
