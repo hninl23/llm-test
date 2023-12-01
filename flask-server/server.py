@@ -1,16 +1,24 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from langchain.llms import OpenAI
-from langchain.document_loaders import PyPDFLoader
+from langchain.document_loaders import PyPDFLoader,WebBaseLoader
 from dotenv import load_dotenv
-from langchain.text_splitter import CharacterTextSplitter
+from langchain.chains import RetrievalQA
+from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
-#from openai import get_openai_callback
-from langchain.vectorstores import FAISS
+from langchain.vectorstores import Chroma
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage
 from flask_cors import CORS 
 import openai
 import os
+import chromadb
+from langchain.prompts import PromptTemplate
+from chromadb.config import Settings
+from langchain.retrievers import SVMRetriever
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
+from langchain.retrievers.document_compressors import LLMChainExtractor
 
 
 app = Flask(__name__)
@@ -34,60 +42,157 @@ def query_open_ai():
         'body': response.content
     }
 #curl -XPOST --header "Content-Type: application/json" -d {\"prompt\":\"What is 2+2?\"}" 127.0.0.1:5000/query_open_ai
-@app.route('/process-pdf', methods=['POST'])
+
+try:
+    path = os.path.dirname(os.path.abspath(__file__))
+    upload_folder = os.path.join(path, "tmp")
+    os.makedirs(upload_folder, exist_ok=True)
+    app.config["UPLOAD_FOLDER"] = upload_folder
+except Exception as e:
+    app.logger.info("Error in creating upload folder:")
+    app.logger.error("Exception occured: {}".format(e))
+
+@app.route('/process_pdf', methods=['POST', 'GET'])
 def process_pdf():
-    #load_dotenv()
-    try:
-        pdf = request.files['pdf']
-        if pdf:
-            pdf_reader = PyPDFLoader(pdf)
-            text = ""
-            for page in pdf_reader.pages:
-                text += page.extract_text()
-            # Additional processing steps go here
-            print("Text from pdf:", text)
 
-                # split into chunks
-            text_splitter = CharacterTextSplitter(
-            separator="\n",
+    pdf_file = request.files['file']
+    if pdf_file is not None:
+
+        save_path = os.path.join(app.config.get('UPLOAD_FOLDER'), "temp.pdf")
+        pdf_file.save(save_path)
+
+        loader = PyPDFLoader(save_path)
+
+        pages = loader.load()
+
+        text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len
-            )
-            chunks = text_splitter.split_text(text)
+            chunk_overlap=200
+        )
+        chunks = text_splitter.split_documents(pages)
 
-            # create embeddings
-            embeddings = OpenAIEmbeddings()
-            knowledge_base = FAISS.from_texts(chunks, embeddings)
+        embeddings = OpenAIEmbeddings()
 
-            # Get user question from the request
-            user_question = request.form.get('user_question')
+        vectordb = Chroma.from_documents(
+            documents=chunks,
+            embedding=embeddings,
+            persist_directory="./data"
+        )
+        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
-            # Load the OpenAI QA chain
-            llm = OpenAI()
-                    # Perform similarity search to get relevant documents
-            docs = knowledge_base.similarity_search(user_question)
+        template = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. Use two sentences maximum. Keep the answer as concise as possible. Always say "thanks for asking!" at the end of the answer. 
+            {context}
+            Question: {question}
+            Helpful Answer:"""
+        QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"],template=template,)
 
-            # Use OpenAI's completion API for question-answering
-            
-            # openai.api_key = 'YOUR_OPENAI_API_KEY'  # Replace with your OpenAI API key
-            
-            response = llm.Completion.create(
-                    model="gpt-3.5-turbo",  # You can choose a different model if needed
-                    prompt=f"Question: {user_question}\nContext: {docs}",  # Combine question and context
-                    temperature=0.7,  # Adjust temperature as needed
-                    max_tokens=100  # Adjust max tokens as needed
-            )
+        memory = ConversationBufferMemory(
+            memory_key="chat_history", #chat history is a lsit of messages
+            return_messages=True
+        )
+        qa = ConversationalRetrievalChain.from_llm(
+            llm,
+            retriever=vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 2}),
+            memory=memory
+        )
 
-            answer = response['choices'][0]['text'].strip()
-            print(answer)
-            return jsonify({"text": text, "answer": response})
-        else:
-            return jsonify({"error": "PDF file not provided."})
+        question= request.form.get('question')
+        result = qa({"question": question})
+        ans = result.get('answer')
+        # print(result['answer'])
+        # question="How much are they worth?"
+        # result = qa({"question": question})
+        # print(result['answer'])
+        print(ans)
+        return jsonify({
+            'statusCode': 200,
+            'ans': ans
+        })
+    else:
+        # Return an error response if the file is not provided
+        return jsonify({'statusCode': 400, 'error': 'PDF file not provided'})
+
+
+@app.route('/read_pdf', methods=['GET'])
+def read_pdf():
+    #pdf_path = os.path.join("llm-test", "hninstory.pdf")
+    loader = PyPDFLoader("syllabushnin.pdf")
+
+    pages = loader.load()
     
-    except Exception as e:
-        print(f"An error occured: {e}")
-        return jsonify({"error": "Internal Server Error"}), 500
+    text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200
+    )
+    chunks = text_splitter.split_documents(pages)
+
+    
+    embeddings = OpenAIEmbeddings()
+
+    persist_directory = 'docs/chroma/'
+    vectordb = Chroma.from_documents(
+        documents=chunks,
+        embedding=embeddings,
+        persist_directory="./data"
+    )
+    print("COLLECTION:", vectordb._collection.count())
+    # vectordb.persist()
+    
+    # docs = vectordb.similarity_search(question, k=2)
+    # print("Length docs:", len(docs))
+    # print("content docs:", docs[0].page_content[:200])
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    # vectordb.persist()
+    # def pretty_print_docs(docs):
+    #     print(f"\n{'-' * 100}\n".join([f"Document {i+1}:\n\n" + d.page_content for i, d in enumerate(docs)]))
+    # llm = OpenAI(temperature=0)
+    # compressor = LLMChainExtractor.from_llm(llm)
+
+    # compression_retriever = ContextualCompressionRetriever(
+    # base_compressor=compressor,
+    # base_retriever=vectordb.as_retriever()
+    # )
+#___________________________________#
+    # question="Who is the professor?"
+    # compressed_docs = compression_retriever.get_relevant_documents(question)
+    # print(pretty_print_docs(compressed_docs))
+    # qa_chain = RetrievalQA.from_chain_type (
+    #     llm,
+    #     retriever= vectordb.as_retriever(),
+    #     return_source_documents=True,
+    #     chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}
+    # )
+    # result = qa_chain({"query": question})
+    # print(result["result"])
+    #_________________#
+    memory = ConversationBufferMemory(
+        memory_key="chat_history", #chat history is a lsit of messages
+        return_messages=True
+    )
+
+    template = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. Use two sentences maximum. Keep the answer as concise as possible. Always say "thanks for asking!" at the end of the answer. 
+        {context}
+        Question: {question}
+        Helpful Answer:"""
+    QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"],template=template,)
+    qa = ConversationalRetrievalChain.from_llm(
+        llm,
+        retriever=vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 2}),
+        memory=memory,
+        return_source_documents=True,
+        
+        condense_question_prompt=dict(prompt = QA_CHAIN_PROMPT)
+    )
+    question="How many programming assignments are there?"
+    result = qa({"question": question})
+    print(result['answer'])
+    question="How much are they worth?"
+    result = qa({"question": question})
+    print(result['answer'])
+    return {
+        'statusCode': 500,
+    
+    }
 
 
 if __name__ == '__main__':
