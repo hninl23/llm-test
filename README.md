@@ -5,15 +5,11 @@
 
 - pip install requirement.txt file
 - If it doesn't work, try to install them individually
-## ##Frontend
-
-- npm Install
-- npm start (for windows) | npm run start(mac)
-
-
-
 ##Frontend
+
 - npm Install
 - npm start (for windows) | npm run start(mac)
-  
+
+
+
 
