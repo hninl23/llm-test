@@ -73,6 +73,7 @@ function App() {
   const [pdfFile, setPdfFile] = useState(null);
   const [userQuestion, setUserQuestion] = useState('');
   const [result, setResult] = useState('');
+  const [id, setID] = useState('');
 
   const handleQuestionChange = (event) => {
     setUserQuestion(event.target.value);
@@ -104,13 +105,16 @@ function App() {
       return response.json();
     })
     .then((data) => {
-      setResult(data?.ans || 'No answer found'); //name the same as python result
+      setResult(data?.ans|| 'No answer found'); //name the same as python result
       console.log(data?.ans)
+      setID(data.id);
     })
     .catch((error) => {
       console.error("Error", error);
     });
   };
+
+  //fetch("http://127.0.0.1:5000/process_pdf/" + id, {
 
   return (
     <div className="form-container">

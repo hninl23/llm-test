@@ -42,6 +42,18 @@ def query_open_ai():
         'body': response.content
     }
 #curl -XPOST --header "Content-Type: application/json" -d {\"prompt\":\"What is 2+2?\"}" 127.0.0.1:5000/query_open_ai
+"""
+create a repo for proj
+invite rest of team to proj
+migrate exisitng code to w new repo?
+talk about issues
+try to figure out the tech stuff
+create documentation (describe componeents and archi)
+fix current issue
+push all changes to repo and try to view chroma
+report on issues and solve 
+make detail report and status (specific, summary)
+"""
 
 try:
     path = os.path.dirname(os.path.abspath(__file__))
@@ -113,7 +125,7 @@ def process_pdf():
         return jsonify({'statusCode': 400, 'error': 'PDF file not provided'})
 
 
-@app.route('/read_pdf', methods=['GET'])
+@app.route('/read_pdf/:id', methods=['GET'])
 def read_pdf():
     #pdf_path = os.path.join("llm-test", "hninstory.pdf")
     loader = PyPDFLoader("syllabushnin.pdf")
@@ -135,7 +147,14 @@ def read_pdf():
         embedding=embeddings,
         persist_directory="./data"
     )
+    # client = chromadb.Client(Settings(is_persistent=True,
+    #                                 persist_directory= "./data",
+    #                             ))
     print("COLLECTION:", vectordb._collection.count())
+    # coll = client.get_collection("chroma-collections")
+    db3 = Chroma(persist_directory="./data", embedding_function=embeddings)
+    print(db3.get())
+    # print(vectordb.get())
     # vectordb.persist()
     
     # docs = vectordb.similarity_search(question, k=2)
@@ -183,12 +202,12 @@ def read_pdf():
         
         condense_question_prompt=dict(prompt = QA_CHAIN_PROMPT)
     )
-    question="How many programming assignments are there?"
-    result = qa({"question": question})
-    print(result['answer'])
-    question="How much are they worth?"
-    result = qa({"question": question})
-    print(result['answer'])
+    # question="How many programming assignments are there?"
+    # result = qa({"question": question})
+    # print(result['answer'])
+    # question="How much are they worth?"
+    # result = qa({"question": question})
+    # print(result['answer'])
     return {
         'statusCode': 500,
     
@@ -199,3 +218,38 @@ if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000, debug=True)
 
 
+
+"""
+Lq: monitor token usage from my app (my app as a ref)
+How much limit: 
+How to elaborate on the token usage:
+SImple question so few questions
+more complex answer -> more token so we have to monitor so we don't go over the limit
+Token reading repetition: https://python.langchain.com/docs/modules/model_io/llms/token_usage_tracking
+
+Min: monitor rate limit 
+- face challenges when we execute queries to OPENAI and go over rate limit
+- token/min or second key method rate/min or token/min
+rate reading: https://platform.openai.com/docs/guides/rate-limits?context=tier-free
+
+Hnin: 
+collab with team & ensure everyone is working with specific task
+work on making app more conversational (with mem)
+call to check progress on team (work with ALfred and check on accomplishment )
+next call:
+folloe up call with alfred and also call in class (wed: ind, fri: group)
+make sure everyone is makign progress
+Feature1 : monitor token consumtion (LQ)
+
+Eitan:
+- help me any realted issue with the task (technical task)
+On wed : with eitan and alfred 
+
+https://api.python.langchain.com/en/latest/chat_models/langchain.chat_models.openai.ChatOpenAI.html
+call on wednesday (4 pm
+)
+ensure progress from them everyday 
+
+sepdn weekend on figure out how memeory is sotred an dsuch 
+
+"""
