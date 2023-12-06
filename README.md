@@ -74,7 +74,7 @@ $ virtualenv venv | $ python3 -m venv venv
 $ source venv/bin/activate 
 $
 $ # Install modules
-$ pip install -r requirements.txt #make sure to install any extra library if there are errors
+$ pip install -r requirement.txt #make sure to install any extra library if there are errors
 $
 $ # Set Up the Environment
 $ export FLASK_APP=run.py
