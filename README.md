@@ -52,7 +52,7 @@ After we register a new user and signIN, all the private pages become accessible
 
 ## ✨ General Information
 
-The product is built using React as a frontend component that accepts a pdf and a use question which is then processed in the Flask backend using LangchainAI API:
+The product is built using React as a frontend component that accepts a PDF and a user question which is then processed in the Flask backend using LangchainAI API:
 
 - `Compile and start` the **Flask API Backend**
   - be default the server starts on port `5000`
