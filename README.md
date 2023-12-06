@@ -1,4 +1,4 @@
-# [React Flask LLM Application]
+# [React Flask LLM Application 🤖]
 
 A full-stack LLM project that uses a `React UI` powered by a simple `Flask API Server`. 
 <br />
