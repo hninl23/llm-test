@@ -58,9 +58,6 @@ The product is built using React as a frontend component that accepts a pdf and 
   - be default the server starts on port `5000`
 - `Compile and start` the **React UI**
   - UI will start on port `3000` and expects a running backend on port `5000`
-- `Configuration` (Optional)
-  - Change the API port
-  - Configure the API port used by the React UI to communicate with the backend 
 
 <br />
 
@@ -73,11 +70,11 @@ $ cd llm-test
 $ cd flask-server
 $ 
 $ # Create a virtual environment
-$ virtualenv env
-$ source env/bin/activate
+$ virtualenv venv | $ python3 -m venv venv
+$ source venv/bin/activate 
 $
 $ # Install modules
-$ pip install -r requirement.txt #make sure to install any extra library if there are errors
+$ pip install -r requirements.txt #make sure to install any extra library if there are errors
 $
 $ # Set Up the Environment
 $ export FLASK_APP=run.py
