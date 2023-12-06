@@ -21,7 +21,7 @@ At this point, the API should be up & running at `http://localhost:5000`, and we
 
 ```bash
 $cd llm-test
-$ cd react-ui
+$ cd client
 #look for instructions on how to install npm in the readme file insdie 'client' folder
 ```
 
