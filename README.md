@@ -3,7 +3,7 @@
 A full-stack LLM project that uses a `React UI` powered by a simple `Flask API Server`. 
 <br />
 
-## ✨ **Start the Flask API** via `Docker`
+## ✨ **Start the Flask API** 
 
 ```bash
 $ cd llm-test
