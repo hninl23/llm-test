@@ -1,4 +1,4 @@
-# [React Flask LLM Application]
+# [React Flask LLM Application 🤖]
 
 A full-stack LLM project that uses a `React UI` powered by a simple `Flask API Server`. 
 <br />
@@ -52,7 +52,7 @@ After we register a new user and signIN, all the private pages become accessible
 
 ## ✨ General Information
 
-The product is built using React as a frontend component that accepts a pdf and a use question which is then processed in the Flask backend using LangchainAI API:
+The product is built using React as a frontend component that accepts a PDF and a user question which is then processed in the Flask backend using LangchainAI API:
 
 - `Compile and start` the **Flask API Backend**
   - be default the server starts on port `5000`
@@ -74,7 +74,7 @@ $ virtualenv venv | $ python3 -m venv venv
 $ source venv/bin/activate 
 $
 $ # Install modules
-$ pip install -r requirements.txt #make sure to install any extra library if there are errors
+$ pip install -r requirement.txt #make sure to install any extra library if there are errors
 $
 $ # Set Up the Environment
 $ export FLASK_APP=run.py
