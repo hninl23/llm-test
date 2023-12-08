@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import {BrowserRouter as Router} from 'react-router-dom';
 import './App.css';
 
 
@@ -70,6 +71,7 @@ import './App.css';
 
 
 function App() {
+  
   const [pdfFile, setPdfFile] = useState(null);
   const [userQuestion, setUserQuestion] = useState('');
   const [result, setResult] = useState('');
@@ -118,6 +120,7 @@ function App() {
 
   return (
     <div className="form-container">
+      <Router basename="/llm-test"></Router>
       <form onSubmit={handleSubmit} className="submit-button">
         <label className="q-box-container" htmlFor="question">
           Question:
@@ -151,6 +154,7 @@ function App() {
       </form>
       <p className="result-box">Result: {result}</p>
     </div>
+    
   );
 }
 
