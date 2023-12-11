@@ -40,9 +40,11 @@
   background-color: slategray;
   border-radius: 0.5rem;
   box-shadow: 0 25px -12px rgba(0,0,0,0.25);
+  justify-content: center;
+  align-items: center;
 }
 
-.submit-button {
+.submit-button{
   margin-bottom: 2rem;
 }
 
@@ -83,4 +85,39 @@
 .result-box {
   color: black;
   font-weight: bold;
+}
+
+#navbutton {
+  position: sticky;
+  width: 13rem;
+  top: 0;
+  background-color: #A5C4D4;
+  border: 1px solid #8499B1;
+  font-weight: lighter;
+  padding: .5rem .5rem;
+  margin: 1rem 2rem;
+  border-radius: 0.25rem;
+  text-align: center;
+  cursor: pointer;
+
+}
+
+.title-mon {
+  font-weight: 500;
+}
+
+#modelDropDown {
+  padding: .5rem;
+  background-color: #F3F3F3;
+  font-weight: 500;
+}
+
+.ans-container {
+  background-color: aliceblue;
+  padding: 1rem;
+  border-radius: 2rem;
+}
+.title-monitor {
+  text-align: center;
+  color: #1a1b1e;
 }

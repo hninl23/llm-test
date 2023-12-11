@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import {BrowserRouter as Router} from 'react-router-dom';
+// import {BrowserRouter as Router} from 'react-router-dom';
 import './App.css';
+import MonitoringComponent from './monitoringComponent';
 
 
 // function App() {
@@ -71,11 +72,10 @@ import './App.css';
 
 
 function App() {
-  
   const [pdfFile, setPdfFile] = useState(null);
   const [userQuestion, setUserQuestion] = useState('');
   const [result, setResult] = useState('');
-  const [id, setID] = useState('');
+  const [view, setView] = useState('form');
 
   const handleQuestionChange = (event) => {
     setUserQuestion(event.target.value);
@@ -109,7 +109,7 @@ function App() {
     .then((data) => {
       setResult(data?.ans|| 'No answer found'); //name the same as python result
       console.log(data?.ans)
-      setID(data.id);
+
     })
     .catch((error) => {
       console.error("Error", error);
@@ -120,7 +120,13 @@ function App() {
 
   return (
     <div className="form-container">
-      <Router basename="/llm-test"></Router>
+      {/* <Router basename="/llm-test"></Router> */}
+      <nav>
+        <button id='navbutton' onClick={() => setView('form')}>Q&A</button>
+        <button id='navbutton' onClick={() => setView('monitoring')}>Monitoring</button>
+      </nav>
+      
+      {view === 'form' && (
       <form onSubmit={handleSubmit} className="submit-button">
         <label className="q-box-container" htmlFor="question">
           Question:
@@ -151,8 +157,11 @@ function App() {
         >
           Submit
         </button>
+        <p className="result-box">Result: {result}</p>
       </form>
-      <p className="result-box">Result: {result}</p>
+
+      )}
+      {view === 'monitoring' && <MonitoringComponent/> }
     </div>
     
   );
