@@ -37,8 +37,5 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {
-    "gh-pages": "^6.1.0",
-    "homepage": "https://hninl23.github.io/llm-test/"
-  }
+
 }
