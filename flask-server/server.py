@@ -133,6 +133,94 @@ def process_pdf():
         # Return an error response if the file is not provided
         return jsonify({'statusCode': 400, 'error': 'PDF file not provided'})
 
+@app.route('/read_pdf/:id', methods=['GET'])
+def read_pdf():
+    #pdf_path = os.path.join("llm-test", "hninstory.pdf")
+    loader = PyPDFLoader("syllabushnin.pdf")
+
+    pages = loader.load()
+    
+    text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200
+    )
+    chunks = text_splitter.split_documents(pages)
+    print(chunks)
+    
+    embeddings = OpenAIEmbeddings()
+
+    vectordb = Chroma.from_documents(
+        documents=chunks,
+        embedding=embeddings,
+        persist_directory="./data"
+    )
+    # client = chromadb.Client(Settings(is_persistent=True,
+    #                                 persist_directory= "./data",
+    #                             ))
+    print("COLLECTION:", vectordb._collection.count())
+    # coll = client.get_collection("chroma-collections")
+    db3 = Chroma(persist_directory="./data", embedding_function=embeddings)
+    print(db3.get())
+    # print(vectordb.get())
+    # vectordb.persist()
+    
+    # docs = vectordb.similarity_search(question, k=2)
+    # print("Length docs:", len(docs))
+    # print("content docs:", docs[0].page_content[:200])
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    # vectordb.persist()
+    # def pretty_print_docs(docs):
+    #     print(f"\n{'-' * 100}\n".join([f"Document {i+1}:\n\n" + d.page_content for i, d in enumerate(docs)]))
+    # llm = OpenAI(temperature=0)
+    # compressor = LLMChainExtractor.from_llm(llm)
+
+    # compression_retriever = ContextualCompressionRetriever(
+    # base_compressor=compressor,
+    # base_retriever=vectordb.as_retriever()
+    # )
+#___________________________________#
+    # question="Who is the professor?"
+    # compressed_docs = compression_retriever.get_relevant_documents(question)
+    # print(pretty_print_docs(compressed_docs))
+    # qa_chain = RetrievalQA.from_chain_type (
+    #     llm,
+    #     retriever= vectordb.as_retriever(),
+    #     return_source_documents=True,
+    #     chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}
+    # )
+    # result = qa_chain({"query": question})
+    # print(result["result"])
+    #_________________#
+    memory = ConversationBufferMemory(
+        memory_key="chat_history", #chat history is a lsit of messages
+        return_messages=True
+    )
+
+    template = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. Use two sentences maximum. Keep the answer as concise as possible. Always say "thanks for asking!" at the end of the answer. 
+        {context}
+        Question: {question}
+        Helpful Answer:"""
+    QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"],template=template,)
+    qa = ConversationalRetrievalChain.from_llm(
+        llm,
+        retriever=vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 2}),
+        memory=memory,
+        return_source_documents=True,
+        
+        condense_question_prompt=dict(prompt = QA_CHAIN_PROMPT)
+    )
+    # question="How many programming assignments are there?"
+    # result = qa({"question": question})
+    # print(result['answer'])
+    # question="How much are they worth?"
+    # result = qa({"question": question})
+    # print(result['answer'])
+    return {
+        'statusCode': 500,
+    
+}
+
+
 def print_date_time():
     print(time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
     return(time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
@@ -167,37 +255,4 @@ if __name__ == '__main__':
 
 
 
-"""
-Lq: monitor token usage from my app (my app as a ref)
-How much limit: 
-How to elaborate on the token usage:
-SImple question so few questions
-more complex answer -> more token so we have to monitor so we don't go over the limit
-Token reading repetition: https://python.langchain.com/docs/modules/model_io/llms/token_usage_tracking
 
-Min: monitor rate limit 
-- face challenges when we execute queries to OPENAI and go over rate limit
-- token/min or second key method rate/min or token/min
-rate reading: https://platform.openai.com/docs/guides/rate-limits?context=tier-free
-
-Hnin: 
-collab with team & ensure everyone is working with specific task
-work on making app more conversational (with mem)
-call to check progress on team (work with ALfred and check on accomplishment )
-next call:
-folloe up call with alfred and also call in class (wed: ind, fri: group)
-make sure everyone is makign progress
-Feature1 : monitor token consumtion (LQ)
-
-Eitan:
-- help me any realted issue with the task (technical task)
-On wed : with eitan and alfred 
-
-https://api.python.langchain.com/en/latest/chat_models/langchain.chat_models.openai.ChatOpenAI.html
-call on wednesday (4 pm
-)
-ensure progress from them everyday 
-
-sepdn weekend on figure out how memeory is sotred an dsuch 
-
-"""

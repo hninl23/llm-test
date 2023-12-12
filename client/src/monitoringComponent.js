@@ -62,7 +62,8 @@ const MonitoringComponent = ({ tokenCountsHistory }) => {
             <option value="gpt-3.5-turbo">GPT-3.5-TURBO(FREE)</option>
             <option value="gpt-4">GPT-4(TIER 1)</option>
             <option value="text-embedding-ada-002">TEXT-EMBEDDING-ADA-002(FREE)</option>
-            <option value="text-embedding-ada-002-T1">TEXT-EMBEDDING-ADA-002(TIER 1)</option>
+            <option value="text-embedding-ada-002-T1">TEXT-EMBEDDING-ADA-002(TIER 1)</option> 
+            {/* //can add the rest of the options */}
         </select>
 
     <p className='title-mon'>Total Tokens Used: {tokenCount}</p>

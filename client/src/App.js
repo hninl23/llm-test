@@ -122,7 +122,7 @@ function App() {
     <div className="form-container">
       {/* <Router basename="/llm-test"></Router> */}
       <nav>
-        <button id='navbutton' onClick={() => setView('form')}>Q&A</button>
+        <button id='navbutton' onClick={() => setView('form')}>Q-A</button>
         <button id='navbutton' onClick={() => setView('monitoring')}>Monitoring</button>
       </nav>
       
@@ -157,11 +157,11 @@ function App() {
         >
           Submit
         </button>
-        <p className="result-box">Result: {result}</p>
       </form>
 
       )}
-      {view === 'monitoring' && <MonitoringComponent/> }
+      <p className="result-box">Result: {result}</p>
+      {/* {view === 'monitoring' && <MonitoringComponent/> } */}
     </div>
     
   );
