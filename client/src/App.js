@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import {BrowserRouter as Router} from 'react-router-dom';
+
 import './App.css';
 
 
@@ -75,7 +75,6 @@ function App() {
   const [pdfFile, setPdfFile] = useState(null);
   const [userQuestion, setUserQuestion] = useState('');
   const [result, setResult] = useState('');
-  const [id, setID] = useState('');
 
   const handleQuestionChange = (event) => {
     setUserQuestion(event.target.value);
@@ -109,7 +108,6 @@ function App() {
     .then((data) => {
       setResult(data?.ans|| 'No answer found'); //name the same as python result
       console.log(data?.ans)
-      setID(data.id);
     })
     .catch((error) => {
       console.error("Error", error);
@@ -120,7 +118,6 @@ function App() {
 
   return (
     <div className="form-container">
-      <Router basename="/llm-test"></Router>
       <form onSubmit={handleSubmit} className="submit-button">
         <label className="q-box-container" htmlFor="question">
           Question:
