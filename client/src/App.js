@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 
 import './App.css';
+import MonitoringComponent from './MonitoringComponent'
 
 
 // function App() {
@@ -75,6 +76,7 @@ function App() {
   const [pdfFile, setPdfFile] = useState(null);
   const [userQuestion, setUserQuestion] = useState('');
   const [result, setResult] = useState('');
+  const [activeTab, setActiveTab] = useState('form');
 
   const handleQuestionChange = (event) => {
     setUserQuestion(event.target.value);
@@ -114,10 +116,29 @@ function App() {
     });
   };
 
-  //fetch("http://127.0.0.1:5000/process_pdf/" + id, {
+  const switchToFormTab = () => {
+    setActiveTab('form');
+  };
+
+  const switchToMonitoringTab = () => {
+    setActiveTab('monitoring');
+  };
+
 
   return (
-    <div className="form-container">
+    <div className='tot-container'>
+      <h1 className='header'>LangGuard</h1>
+      <div className="tab-container">
+        <button onClick={switchToFormTab} id='form-button' className={activeTab === 'form' ? 'active-tab' : ''}>
+          Q-A
+        </button>
+        <button onClick={switchToMonitoringTab} id='form-button' className={activeTab === 'monitoring' ? 'active-tab' : ''}>
+          Monitoring
+        </button>
+      </div>
+
+      {activeTab === 'form' && (
+      <div className="form-container">
       <form onSubmit={handleSubmit} className="submit-button">
         <label className="q-box-container" htmlFor="question">
           Question:
@@ -150,9 +171,15 @@ function App() {
         </button>
       </form>
       <p className="result-box">Result: {result}</p>
+      </div>
+      )}
+      {activeTab === 'monitoring' && (
+        <div className="monitoring-container">
+          <MonitoringComponent/> 
+      </div>
+    )}
     </div>
     
   );
 }
-
 export default App;

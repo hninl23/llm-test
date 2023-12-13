@@ -2,6 +2,9 @@
   text-align: center;
 }
 
+body {
+  background-color: #282c34;
+}
 
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
@@ -33,7 +36,7 @@
   }
 }
 
-.form-container, .big-container {
+.form-container, .big-container, .monitoring-container  {
   max-width: 35rem;
   margin: 2rem auto;
   padding: 1rem;
@@ -83,4 +86,60 @@
 .result-box {
   color: black;
   font-weight: bold;
+}
+
+.header {
+  color: #7ae582;
+}
+
+.tot-container {
+  display: flex;
+  flex-direction: column; /* Stack children vertically */
+  align-items: center; /* Center horizontally */
+  justify-content: center; /* Center vertically */
+}
+
+.tab-container {
+  display: flex;
+  justify-content: space-around; /* Adjust as needed */
+  padding: 1%; /* Add padding for spacing */
+  width: 30rem;
+
+}
+
+
+#form-button, #monitoring-button {
+  flex: 1; /* Make both buttons take equal width */
+  padding: 15px; /* Add padding for better visual appearance */
+  border: none;
+  cursor: pointer;
+  background-color: rgb(192, 192, 186); /* Add background color */
+  font-size: 15px; /* Adjust the font size */
+  /* Add other styling properties as needed */
+}
+
+
+.active-tab {
+  /* Add styles for the active tab */
+  font-weight: bold;
+  color: #333;
+  background-color: #ddd;
+}
+
+
+#modelDropDown {
+  padding: .5rem;
+  background-color: #F3F3F3;
+  font-weight: 500;
+}
+
+.ans-container {
+  background-color: aliceblue;
+  padding: 1rem;
+  border-radius: 2rem;
+}
+
+.title-monitor {
+  text-align: center;
+  color: #1a1b1e;
 }
