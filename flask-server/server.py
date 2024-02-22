@@ -74,9 +74,8 @@ def process_pdf():
         )
 
         question = request.form.get('question')
-        print(question)
 
-        result = qa.invoke({"question": question}) #error
+        result = qa.invoke({"question": question}) 
 
         chat = memory.load_memory_variables({})["chat_history"]
         print("Before9:" , chat)
@@ -87,8 +86,7 @@ def process_pdf():
         _chat_history.append({"question": question, "answer": result["answer"]})
         print(chat)
         print("Chat History:", _chat_history)
-        #if q == quit/bye/exit -> clear chat_hisotry?
-        # print(chat)
+
         return jsonify(
             {'statusCode': 200,
             "chat": _chat_history}
