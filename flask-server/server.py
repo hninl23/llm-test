@@ -13,6 +13,8 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain_community.vectorstores import DocArrayInMemorySearch
 from langchain_openai import OpenAIEmbeddings
+from langchain.chains.question_answering import load_qa_chain
+from langchain.prompts import PromptTemplate
 import openai
 import sys
 import shutil
@@ -47,6 +49,7 @@ def process_pdf():
         loader = PyPDFLoader(save_path)
 
         pages = loader.load()
+        print(pages)
         ##end of loading
 
         text_splitter = RecursiveCharacterTextSplitter(
@@ -54,7 +57,7 @@ def process_pdf():
             chunk_overlap=200
         )
         chunks = text_splitter.split_documents(pages)
-
+        
         vectordb = Chroma.from_documents (
             documents=chunks,
             embedding=OpenAIEmbeddings(),
@@ -63,19 +66,38 @@ def process_pdf():
         memory = ConversationBufferMemory(
             memory_key="chat_history", #chat history is a lsit of messages
             return_messages=True,
-            # input_key="question",
-            # output_key="answer"
         )
+        print("inside1")
+        QA_prompt = PromptTemplate(
+            template= """You are a PDF reader assistant. Given a question: {question} with the {chat_history} and a context: {context}, provide a short answer from the context that addresses the question.
+                         If the context does not provide any answer to the question, respond with 'The information is not found in the PDF' """, input_variables=["question","chat_history", "context"]
+        )
+        print("inside2")
 
+       
         qa = ConversationalRetrievalChain.from_llm(
             llm=ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0),
             retriever=vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 4}),
-            memory=memory
+            # memory=memory,
+            response_if_no_docs_found="The answer is not provided in the PDF",
+            combine_docs_chain_kwargs={"prompt": QA_prompt},
+            return_source_documents= True
+            
         )
+        print("inside3")
 
         question = request.form.get('question')
+        print("inside4")
+        chat = memory.load_memory_variables({})["chat_history"]
+        result = qa.invoke({"question": question, "chat_history": chat}) 
+        source_docs = result["source_documents"]
+        page_nums = source_docs[0].metadata["page"]
+        if result["answer"] == "The information is not found in the PDF.":
+            page_nums = ""
+        print("Page", page_nums)
+        print("inside5")
+        print(result)
 
-        result = qa.invoke({"question": question}) 
 
         chat = memory.load_memory_variables({})["chat_history"]
         print("Before9:" , chat)
@@ -83,8 +105,8 @@ def process_pdf():
             _chat_history.clear() 
             shutil.rmtree("./data")
             return jsonify({'statusCode': 200, "chat": _chat_history})
-        _chat_history.append({"question": question, "answer": result["answer"]})
-        print(chat)
+            
+        _chat_history.append({"question": question, "answer": result["answer"], "page": page_nums})
         print("Chat History:", _chat_history)
 
         return jsonify(

@@ -9,30 +9,34 @@ function App() {
   const [userQuestion, setUserQuestion] = useState('');
   const [result, setResult] = useState([]);
   const [activeTab, setActiveTab] = useState('form');
-  // const [aiMessages, setAiMessages] = useState([]);
-  // const [userMessages, setUserMessages] = useState([]);
+
   const [chatHistory, setChatHistory] = useState([]);
+  const [loading, setLoading] = useState(false)
 
 
   useEffect(() => {
     const handleResultChange = () => {
       const newUserMessages = [];
+      const newPage = "";
 
       result.forEach(message => {
         if (message.question) {
-          newUserMessages.push({ text: message.question });
+          newUserMessages.push({ text: message.question, page: ""});
         } 
         if (message.answer) {
-          newUserMessages.push({text: message.answer });
+          newUserMessages.push({text: message.answer, page: message.page });
         }
+
       });
-      
+
       setChatHistory(newUserMessages);
-      // setAiMessages(newAiMessages);
+
+
 
     };
   
     handleResultChange();
+    console.log(result)
   }, [result]); 
 
   const handleQuestionChange = (event) => {
@@ -55,7 +59,8 @@ function App() {
       formData.append('question', userQuestion);
     }
 
-    fetch("http://127.0.0.1:5000/process_pdf", {
+    setLoading(true);
+    fetch("/process_pdf", {
       method: "POST",
       body: formData,
 
@@ -76,6 +81,9 @@ function App() {
       .catch((error) => {
         console.log("hi")
         console.error("Error", error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
@@ -96,7 +104,13 @@ function App() {
           Q-A
         </button>
       </div>
-      {activeTab === 'form' && (
+      {loading ? (
+        <div className='load'> 
+        <h1>Loading... </h1>
+        <p> Please wait a moment 😊 </p>
+        </div>
+        
+      ) : (
         <div>
           <h4>Enter Exit | Leave | End to end/restart the program ⏹️</h4>
           <h4>You can only upload the pdf ONCE and keep asking questions on it 😊!</h4>
@@ -123,10 +137,11 @@ function App() {
             </form>
           </div>
           <div className="chat-history-container">
-            <h2>Chat history</h2>
+            <h2>Chat:</h2>
             <ul>
               {chatHistory.map((message, index) => (
-                <li key={index}>{message.text}</li>
+                <li key={index}>
+                  {index % 2 === 0 ? 'User:' : 'LangGuard:' } {message.text} {message.page}</li>
               ))}
             </ul>
           </div>
