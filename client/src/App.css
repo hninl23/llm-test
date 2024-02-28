@@ -35,9 +35,11 @@
     transform: rotate(360deg);
   }
 }
+
 body {
   background-color: #282c34;
 }
+
 .form-container, .big-container, .monitoring-container {
   width: 35rem;
   margin: 2rem auto;
@@ -96,6 +98,7 @@ body {
   color: black;
   font-weight: bold;
 }
+
 .header {
   color: #7ae582;
   font-family: monospace;
@@ -116,7 +119,6 @@ body {
 
 }
 
-
 #form-button, #monitoring-button {
   flex: 1;
   padding: 15px; 
@@ -127,13 +129,11 @@ body {
   font-family: monospace;
 }
 
-
 .active-tab {
   font-weight: bold;
   color: #333;
   background-color: #ddd;
 }
-
 
 #modelDropDown {
   padding: .5rem;
@@ -156,12 +156,14 @@ body {
 
 .chat-history-container {
   width: 35rem;
+  height: 500px;
   margin: 2rem auto;
   padding: 1rem;
   background-color: rgb(184, 158, 158);
   border-radius: 0.5rem;
   box-shadow: 0 25px -12px rgba(0,0,0,0.25);
   font-family: monospace;
+  overflow-y: auto;
 }
 
 .chat-history-container h2 {
@@ -169,14 +171,11 @@ body {
   font-family: monospace;
   font-weight: 500px;
   font-size: 25px;
- 
- 
+
 }
 
 .chat-history-container ul {
   list-style-type: none;
-  
-  
 }
 
 .chat-history-container li {
@@ -190,7 +189,6 @@ body {
   padding: 10px;
   font-family: monospace;
   line-height: 20px;
-  
 }
 
 h4 {
@@ -206,6 +204,7 @@ h4 {
   color: aliceblue;
   font-size: 40px;
 }
+
 .load p{
   text-align: center;
   font-family: monospace;
@@ -229,10 +228,19 @@ h4 {
   }
 
   .load {
+    position: fixed;
     font-size: 30px; 
   }
 
   .load p {
+    font-size: 20px; 
+  }
+
+  .header {
+    font-size: 20px; 
+  }
+
+  .chat-history-container h2 {
     font-size: 20px; 
   }
 }
@@ -247,6 +255,7 @@ h4 {
   }
 
   .load {
+    position: fixed;
     font-size: 20px; 
   }
 

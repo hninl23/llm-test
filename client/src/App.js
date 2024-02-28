@@ -1,6 +1,6 @@
 import React, { useState, useEffect} from 'react'
 import './App.css';
-import MonitoringComponent from './MonitoringComponent'
+// import MonitoringComponent from './MonitoringComponent'
 
 
 function App() {
@@ -9,32 +9,27 @@ function App() {
   const [userQuestion, setUserQuestion] = useState('');
   const [result, setResult] = useState([]);
   const [activeTab, setActiveTab] = useState('form');
-
   const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(false)
-
 
   useEffect(() => {
     const handleResultChange = () => {
       const newUserMessages = [];
-      const newPage = "";
+  
 
       result.forEach(message => {
         if (message.question) {
           newUserMessages.push({ text: message.question, page: ""});
         } 
-        if (message.answer) {
+        if (message.answer != "The information is not found in the PDF.") {
+          newUserMessages.push({text: message.answer, page: "💬 found on page " +  message.page });
+        } else {
           newUserMessages.push({text: message.answer, page: message.page });
         }
 
       });
-
       setChatHistory(newUserMessages);
-
-
-
     };
-  
     handleResultChange();
     console.log(result)
   }, [result]); 
@@ -72,7 +67,7 @@ function App() {
       })
       .then((data) => {
         console.log("hi1")
-        setResult(data?.chat || 'No answer found'); //name the same as python result
+        setResult(data?.chat || 'No answer found'); 
         console.log(data?.chat)
         if (data.statusCode === 200 && data.chat.length === 0) {
           window.location.reload();
@@ -90,12 +85,9 @@ function App() {
   const switchToFormTab = () => {
     setActiveTab('form');
   };
-
-  const switchToMonitoringTab = () => {
-    setActiveTab('monitoring');
-  };
-
-
+  // const switchToMonitoringTab = () => {
+  //   setActiveTab('monitoring');
+  // };
   return (
     <div className='tot-container'>
       <h1 className='header'>LangGuard</h1>
@@ -113,7 +105,7 @@ function App() {
       ) : (
         <div>
           <h4>Enter Exit | Leave | End to end/restart the program ⏹️</h4>
-          <h4>You can only upload the pdf ONCE and keep asking questions on it 😊!</h4>
+          <h4>Please continue to upload the file and keep asking questions on it 😊!</h4>
           <div className="form-container">
             <form onSubmit={handleSubmit} className="submit-button">
               <label className="q-box-container" htmlFor="question">
@@ -137,7 +129,7 @@ function App() {
             </form>
           </div>
           <div className="chat-history-container">
-            <h2>Chat:</h2>
+            <h2 className='chat'>Chat:</h2>
             <ul>
               {chatHistory.map((message, index) => (
                 <li key={index}>
@@ -148,7 +140,6 @@ function App() {
         </div>
       )}
     </div>
-
   );
 }
 
