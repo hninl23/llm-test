@@ -1,80 +1,38 @@
-import React, { useState } from 'react'
-
+import React, { useState, useEffect} from 'react'
 import './App.css';
-
-
-// function App() {
-//   const [question, setQuestion] = useState('');
-//   const [answerFormat, setAnswerFormat] = useState('');
-//   const [result, setResult] = useState('');
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-
-//     try {
-//       const response = await fetch('http://127.0.0.1:5000/query_open_ai', {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({
-//           prompt: `${question}\n${answerFormat}`,
-//         }),
-//       });
-
-//       if (!response.ok) {
-//         throw new Error(`HTTP error! Status: ${response.status}`);
-//       }
-
-//       const data = await response.json();
-//       setResult(data.body);
-//     } catch (error) {
-//       console.error('Error:', error);
-//       setResult('Error occurred');
-//     }
-//   };
-
-//   return (
-//     <div className='big-container'>
-//       <form className='submit-button' onSubmit={handleSubmit}>
-//         <label className="q-box-container">
-//           Question:
-//           <input
-//             className="q-box"
-//             type="text"
-//             value={question}
-//             onChange={(e) => setQuestion(e.target.value)}
-//           />
-//         </label>
-//         <br />
-//         <label className="q-box-container">
-//           Answer Format:
-//           <input
-//             className="q-box"
-//             type="text"
-//             value={answerFormat}
-//             onChange={(e) => setAnswerFormat(e.target.value)}
-//           />
-//         </label>
-//         <br />
-//         <button className="submit-box" type="submit">Submit</button>
-//       </form>
-//       <div>
-//         <h3>Result:</h3>
-//         <p>{result}</p>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default App;
+// import MonitoringComponent from './MonitoringComponent'
 
 
 function App() {
-  
+
   const [pdfFile, setPdfFile] = useState(null);
   const [userQuestion, setUserQuestion] = useState('');
-  const [result, setResult] = useState('');
+  const [result, setResult] = useState([]);
+  const [activeTab, setActiveTab] = useState('form');
+  const [chatHistory, setChatHistory] = useState([]);
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const handleResultChange = () => {
+      const newUserMessages = [];
+  
+
+      result.forEach(message => {
+        if (message.question) {
+          newUserMessages.push({ text: message.question, page: ""});
+        } 
+        if (message.answer != "The information is not found in the PDF.") {
+          newUserMessages.push({text: message.answer, page: "💬 found on page " +  message.page });
+        } else {
+          newUserMessages.push({text: message.answer, page: message.page });
+        }
+
+      });
+      setChatHistory(newUserMessages);
+    };
+    handleResultChange();
+    console.log(result)
+  }, [result]); 
 
   const handleQuestionChange = (event) => {
     setUserQuestion(event.target.value);
@@ -87,71 +45,101 @@ function App() {
   const handleSubmit = (event) => {
     event.preventDefault();
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  if (pdfFile) {
-    formData.append("file", pdfFile);
-  }
-  if(userQuestion) {
-    formData.append('question', userQuestion);
-  }
+    if (pdfFile) {
+      formData.append("file", pdfFile);
+    }
+    if (userQuestion) {
+      formData.append('question', userQuestion);
+    }
 
-  fetch("http://127.0.0.1:5000/process_pdf", {
-    method: "POST",
-    body: formData,
-  })
-    .then((response) => {
-      console.log("PDF file sent successfully");
-      console.log(response)
-      return response.json();
+    setLoading(true);
+    fetch("/process_pdf", {
+      method: "POST",
+      body: formData,
+
     })
-    .then((data) => {
-      setResult(data?.ans|| 'No answer found'); //name the same as python result
-      console.log(data?.ans)
-    })
-    .catch((error) => {
-      console.error("Error", error);
-    });
+      .then((response) => {
+        console.log("PDF file sent successfully");
+        console.log(response)
+        return response.json();
+      })
+      .then((data) => {
+        console.log("hi1")
+        setResult(data?.chat || 'No answer found'); 
+        console.log(data?.chat)
+        if (data.statusCode === 200 && data.chat.length === 0) {
+          window.location.reload();
+        }
+      })
+      .catch((error) => {
+        console.log("hi")
+        console.error("Error", error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
-  //fetch("http://127.0.0.1:5000/process_pdf/" + id, {
-
+  const switchToFormTab = () => {
+    setActiveTab('form');
+  };
+  // const switchToMonitoringTab = () => {
+  //   setActiveTab('monitoring');
+  // };
   return (
-    <div className="form-container">
-      <form onSubmit={handleSubmit} className="submit-button">
-        <label className="q-box-container" htmlFor="question">
-          Question:
-        </label>
-        <input
-          className="q-box"
-          id="question"
-          type="text"
-          value={userQuestion}
-          onChange={handleQuestionChange}
-          placeholder="Ask your question here"
-        />
-        <label className="csv-block" htmlFor="file">
-          Upload PDF file:
-        </label>
-        <input
-          type="file"
-          id="file"
-          name="file"
-          accept=".pdf"
-          onChange={handleFileChange}
-          className="mb-3"
-        />
-        <button
-          className="submit-box"
-          type="submit"
-          disabled={!pdfFile || !userQuestion}
-        >
-          Submit
+    <div className='tot-container'>
+      <h1 className='header'>LangGuard</h1>
+      <div className="tab-container">
+        <button onClick={switchToFormTab} id='form-button' className={activeTab === 'form' ? 'active-tab' : ''}>
+          Q-A
         </button>
-      </form>
-      <p className="result-box">Result: {result}</p>
+      </div>
+      {loading ? (
+        <div className='load'> 
+        <h1>Loading... </h1>
+        <p> Please wait a moment 😊 </p>
+        </div>
+        
+      ) : (
+        <div>
+          <h4>Enter Exit | Leave | End to end/restart the program ⏹️</h4>
+          <h4>Please continue to upload the file and keep asking questions on it 😊!</h4>
+          <div className="form-container">
+            <form onSubmit={handleSubmit} className="submit-button">
+              <label className="q-box-container" htmlFor="question">
+                Question:
+              </label>
+              <input
+                className="q-box"
+                id="question"
+                type="text"
+                value={userQuestion}
+                onChange={handleQuestionChange}
+                placeholder="Ask your question here"
+              />
+              <div>
+                  <label htmlFor="file">Select PDF File:</label>
+                  <input type="file" id="file" accept=".pdf" onChange={handleFileChange} />
+              </div>
+              <button className="submit-box" type="submit" disabled={!pdfFile || !userQuestion}>
+                Submit
+              </button>
+            </form>
+          </div>
+          <div className="chat-history-container">
+            <h2 className='chat'>Chat:</h2>
+            <ul>
+              {chatHistory.map((message, index) => (
+                <li key={index}>
+                  {index % 2 === 0 ? 'User:' : 'LangGuard:' } {message.text} {message.page}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
-    
   );
 }
 

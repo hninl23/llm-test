@@ -1,5 +1,7 @@
 .App {
   text-align: center;
+  background-color: #282c34;
+  font-family: monospace;
 }
 
 
@@ -18,6 +20,7 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  font-family: monospace;
 }
 
 .App-link {
@@ -33,24 +36,31 @@
   }
 }
 
-.form-container, .big-container {
-  max-width: 35rem;
+body {
+  background-color: #282c34;
+}
+
+.form-container, .big-container, .monitoring-container {
+  width: 35rem;
   margin: 2rem auto;
   padding: 1rem;
   background-color: slategray;
   border-radius: 0.5rem;
   box-shadow: 0 25px -12px rgba(0,0,0,0.25);
+  font-family: monospace;
 }
 
 .submit-button {
   margin-bottom: 2rem;
+  font-family: monospace;
 }
 
 .q-box-container {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: bold;
-  color: black
+  color: black;
+  font-family: monospace;
 }
 
 .q-box {
@@ -62,6 +72,7 @@
   margin-bottom: 0.75rem;
   color: black;
   line-height: 1.25;
+  font-family: monospace;
 }
 
 .csv-block{
@@ -69,6 +80,7 @@
   margin-bottom: 0.5rem;
   font-weight: bold;
   color: black;
+  font-family: monospace;
 }
 
 .submit-box{
@@ -78,9 +90,177 @@
   padding: .5rem .5rem;
   border-radius: 0.25rem;
   text-align: center;
+  font-family: monospace;
+  margin-top: 15px;
 }
 
 .result-box {
   color: black;
   font-weight: bold;
 }
+
+.header {
+  color: #7ae582;
+  font-family: monospace;
+}
+
+.tot-container {
+  display: flex;
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+}
+
+.tab-container {
+  display: flex;
+  justify-content: space-around; 
+  padding: 1%; 
+  width: 30rem;
+
+}
+
+#form-button, #monitoring-button {
+  flex: 1;
+  padding: 15px; 
+  border: none;
+  cursor: pointer;
+  background-color: rgb(192, 192, 186); 
+  font-size: 15px;
+  font-family: monospace;
+}
+
+.active-tab {
+  font-weight: bold;
+  color: #333;
+  background-color: #ddd;
+}
+
+#modelDropDown {
+  padding: .5rem;
+  background-color: #F3F3F3;
+  font-weight: 500;
+  font-family: monospace;
+}
+
+.ans-container {
+  background-color: aliceblue;
+  padding: 1rem;
+  border-radius: 2rem;
+  font-family: monospace;
+}
+
+.title-monitor {
+  text-align: center;
+  color: #1a1b1e;
+}
+
+.chat-history-container {
+  width: 35rem;
+  height: 500px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background-color: rgb(184, 158, 158);
+  border-radius: 0.5rem;
+  box-shadow: 0 25px -12px rgba(0,0,0,0.25);
+  font-family: monospace;
+  overflow-y: auto;
+}
+
+.chat-history-container h2 {
+  color: white;
+  font-family: monospace;
+  font-weight: 500px;
+  font-size: 25px;
+
+}
+
+.chat-history-container ul {
+  list-style-type: none;
+}
+
+.chat-history-container li {
+  width: 90%;
+  height: 10%;
+  margin-right: 12rem;
+  margin-bottom: 10px;
+  border-radius:10px;
+  border: 3px white;
+  background-color: #fefefe;
+  padding: 10px;
+  font-family: monospace;
+  line-height: 20px;
+}
+
+h4 {
+  text-align: center;
+  color: white;
+  font-family: monospace;
+}
+
+.load {
+  text-align: center;
+  padding: 80px;
+  font-family: monospace;
+  color: aliceblue;
+  font-size: 40px;
+}
+
+.load p{
+  text-align: center;
+  font-family: monospace;
+  color: aliceblue;
+  font-size: 25px;
+}
+
+@media only screen and (max-width: 768px) {
+  .form-container, .big-container, .monitoring-container, .chat-history-container {
+    width: 90%; 
+    margin: 2rem auto;
+  }
+
+  .chat-history-container li {
+    width: 100%; 
+    margin-right: 0; 
+  }
+
+  .tab-container {
+    width: 90%; 
+  }
+
+  .load {
+    position: fixed;
+    font-size: 30px; 
+  }
+
+  .load p {
+    font-size: 20px; 
+  }
+
+  .header {
+    font-size: 20px; 
+  }
+
+  .chat-history-container h2 {
+    font-size: 20px; 
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .header {
+    font-size: 20px; 
+  }
+
+  .chat-history-container h2 {
+    font-size: 20px; 
+  }
+
+  .load {
+    position: fixed;
+    font-size: 20px; 
+  }
+
+  .load p {
+    font-size: 15px;
+  }
+}
+
