@@ -14,6 +14,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings, OpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
+import uuid
 
 
 app = Flask(__name__)
@@ -31,184 +32,192 @@ except Exception as e:
     app.logger.info("Error in creating upload folder:")
     app.logger.error("Exception occured: {}".format(e))
 
+
 _chat_history = []
+
+
+def process_question(question, memory, qa, chat):
+    result = qa.invoke({"question": question, "chat_history": chat})
+
+    return result
+
+
+def process_pdf_file(pdf_file, pdf_file_name):
+    loader = PyPDFLoader(pdf_file)
+
+    pages = loader.load()
+    return pages
+
+
+def initialize_memory():
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",  # chat history is a lsit of messages
+        return_messages=True,
+    )
+    return memory
+
+
+def initialize_qa(llm, vectordb, qa_prompt):
+    qa = ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=vectordb.as_retriever(
+            search_type="similarity", search_kwargs={"k": 4}),
+        combine_docs_chain_kwargs={"prompt": qa_prompt},
+        return_source_documents=True
+    )
+    return qa
 
 
 @app.route('/process_pdf', methods=['POST', 'GET'])
 def process_pdf():
-
-    pdf_file = request.files['file']
+    pdf_file = request.files.get('file')
+    print("primary", pdf_file)
     if pdf_file is not None:
-
-        save_path = os.path.join(app.config.get('UPLOAD_FOLDER'), "temp.pdf")
-
-        pdf_file.save(save_path)
-
-        loader = PyPDFLoader(save_path)
-
-        pages = loader.load()
-        print(pages)
-        # end of loading
-
         try:
+            print(pdf_file)
+            save_path = os.path.join(
+                app.config.get('UPLOAD_FOLDER'), "temp.pdf")
+            pdf_file.save(save_path)
+            pdf_file_name = pdf_file.filename.split(".")
+
+            pages = process_pdf_file(save_path, pdf_file_name)
+
+            # end of loading
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=400,
                 chunk_overlap=200
             )
             chunks = text_splitter.split_documents(pages)
-        except ValueError as e:
-            print("Invalid chunk_size(chunk_size must be > 0) | Invalid chunk overlap (overlap must be > 0 && > chunk_size)", e)
-        except TypeError as e:
-            print("Pages arugment is not a PyPDFLoader Object ", e)
-        except AttributeError as e:
-            print(
-                "Text splitter object is not a 'RecursiveCharacterTextSplitter' object", e)
-        except Exception as e:
-            print("Text Splitting Failed", e)
 
-        try:
+            persist_directory = "./docs/chroma" + pdf_file_name[0]
+            print("upload", persist_directory)
+            if os.path.exists(persist_directory):
+                print("hey I exist")
+                vectordb = Chroma(persist_directory=persist_directory,
+                                  embedding_function=OpenAIEmbeddings())
+                print("hey i just loaded", vectordb)
+            else:
+                vectordb = Chroma.from_documents(
+                    documents=chunks,
+                    embedding=OpenAIEmbeddings(),
+                    persist_directory=persist_directory
+                )
+                vectordb.persist()
+
+            memory = initialize_memory()
+
+            QA_prompt = PromptTemplate(template="""You are a PDF reader assistant. Given a question: {question} with the {chat_history} and a context: {context}, 
+                            If the context does not provide any answer to the question, respond only with
+                            'The information is not found in the PDF.', nothing else. if information is there
+                            provide a short answer from the context that addresses the question. """, input_variables=["question", "chat_history", "context"]
+                                       )
+
+            llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+            qa = initialize_qa(llm, vectordb, QA_prompt)
+
+            question = request.form.get('question')
+
+            if question.lower() in ["exit", "bye", "leave", "end"]:
+                _chat_history.clear()
+                shutil.rmtree("./docs")
+                chat = ""
+                return jsonify({'statusCode': 200, "chat": _chat_history})
+
+            chat = memory.load_memory_variables({})["chat_history"]
+            result = process_question(question, memory, qa, chat)
+            print(result)
+            source_docs = result["source_documents"]
+
+            page_nums = source_docs[0].metadata["page"]
+
+            if "The information is not found in the PDF." in result["answer"]:
+                pdf_file = ''
+                page_nums = ""
+                pdf_file = None
+                _chat_history.append(
+                    {"question": question, "answer": result["answer"], "page": page_nums, "pdf_file_name": pdf_file_name})
+            else:
+                pdf_file = None
+                _chat_history.append(
+                    {"question": question, "answer": result["answer"], "page": page_nums + 1, "pdf_file_name": pdf_file_name[0]})
+                print("Chat History:", _chat_history)
+
+            return jsonify(
+                {'statusCode': 200,
+                 "chat": _chat_history}
+            )
+        except Exception as e:
+            return jsonify({'statusCode': 400, 'error': 'Invalid PDF'})
+    else:
+        print("Hi, No PDF")
+        _default_pdf = "/Users/hninlwin/llm-test-2/flask-server/purposes-of-syllabus.pdf"
+
+        pages = process_pdf_file(_default_pdf, "default")
+
+        # end of loading
+
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=400,
+            chunk_overlap=200
+        )
+        chunks = text_splitter.split_documents(pages)
+
+        persist_directory = "./docs/chroma" + "default"
+
+        if os.path.exists(persist_directory):
+            vectordb = Chroma(persist_directory=persist_directory,
+                              embedding_function=OpenAIEmbeddings())
+        else:
             vectordb = Chroma.from_documents(
                 documents=chunks,
                 embedding=OpenAIEmbeddings(),
-                persist_directory="./data"
+                persist_directory=persist_directory
             )
-        except ValueError as e:
-            vectordb = {}
-            print("Chunks is not document object", e)
-        except TypeError as e:
-            vectordb = {}
-            print("Current embedding is not an embedding object ", e)
-        except AttributeError as e:
-            vectordb = {}
-            print("Chroma DB does not have 'from_documents' method", e)
-        except Exception as e:
-            vectordb = {}
-            print("Unable to create Vector DB", e)
+            vectordb.persist()
 
-        try:
-            memory = ConversationBufferMemory(
-                memory_key="chat_history",  # chat history is a lsit of messages
-                return_messages=True,
-            )
-        except ValueError as e:
-            memory = {}
-            print("Please define the memeory_key string", e)
-        except TypeError as e:
-            memory = {}
-            print("Memory Key or return_message not returning the correct type", e)
-        except Exception as e:
-            memory = {}
-            print("Unable to load memory", e)
+        memory = initialize_memory()
 
-        try:
-            QA_prompt = PromptTemplate(
-                template="""You are a PDF reader assistant. Given a question: {question} with the {chat_history} and a context: {context}, 
+        QA_prompt = PromptTemplate(
+            template="""You are a PDF reader assistant. Given a question: {question} with the {chat_history} and a context: {context}, 
                                 provide a short answer from the context that addresses the question.
                                 If the context does not provide any answer to the question, respond with 
-                                'The information is not found in the PDF' """, input_variables=["question", "chat_history", "context"]
-            )
-        except ValueError as e:
-            print(
-                "Expected inputs [question, chat_history, context] not found", e)
-        except Exception as e:
-            print("Unable to use QA Prompt", e)
+                                'The information is not found in the PDF.' """, input_variables=["question", "chat_history", "context"]
+        )
+        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+        qa = initialize_qa(llm, vectordb, QA_prompt)
 
-        try:
-            qa = ConversationalRetrievalChain.from_llm(
-                llm=ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0),
-                retriever=vectordb.as_retriever(
-                    search_type="similarity", search_kwargs={"k": 4}),
-                combine_docs_chain_kwargs={"prompt": QA_prompt},
-                return_source_documents=True
-            )
-        except ImportError as e:
-            print("Error: Unable to import all necessary modules.")
-        except Exception as e:
-            qa = None
-            print(
-                "Error: An unexpected error occurred while initializing ConversationalRetrievalChain.", e)
+        question = request.form.get('question')
 
-        try:
-            question = request.form.get('question')
-        except TypeError as e:
-            question = ""
-            print("Form data not in expected format")
-        except KeyError as e:
-            question = ""
-            print("Key 'question' not found in Form Data")
-        except Exception as e:
-            question = ""
-            print("Unable to retrieve question", e)
-
-        if question.lower() in ["exit", "bye", "leave"]:
+        if question.lower() in ["exit", "bye", "leave", "end"]:
             _chat_history.clear()
-            shutil.rmtree("./data")
+            shutil.rmtree("./docs")
             chat = ""
             return jsonify({'statusCode': 200, "chat": _chat_history})
-
-        try:
-            chat = memory.load_memory_variables({})["chat_history"]
-            print("chat:", chat)
-        except KeyError as e:
-            chat = []
-            print("Unable to retrieve the key 'chat_history'", e)
-        except AttributeError as e:
-            chat = []
-            print("Memory Object does not have 'load_memory_variables' method", e)
-        except Exception as e:
-            chat = []
-            print("Unable to retrieve chat_history memory", e)
-
-        try:
-            result = qa.invoke({"question": question, "chat_history": chat})
-            print("Result:", result)
-        except AttributeError as e:
-            result = {}
-            print("Memory Object does not have 'load_memory_variables' method", e)
-        except Exception as e:
-            result = {}
-            print("Error invoking QA", e)
-
-        try:
-            source_docs = result["source_documents"]
-        except KeyError as e:
-            source_docs = ""
-            print("Key 'source_documents' not found in the result dictionary", e)
-        except Exception as e:
-            source_docs = ""
-            print("Unable to retrieve source document", e)
+        chat = memory.load_memory_variables({})["chat_history"]
+        result = process_question(question, memory, qa, chat)
+        print(result)
+        source_docs = result["source_documents"]
 
         try:
             page_nums = source_docs[0].metadata["page"]
-        except KeyError as e:
-            page_nums = ""
-            print("Key 'page' not found in the metadata of soruce docs[0]", e)
         except Exception as e:
-            page_nums = ""
-            print("Unable to retrieve page number", e)
+            page_nums = 0
+            print("Error: out of index")
 
-        try:
-            if result["answer"] == "The information is not found in the PDF.":
-                page_nums = ""
-                _chat_history.append(
-                    {"question": question, "answer": result["answer"], "page": page_nums})
-            else:
-                _chat_history.append(
-                    {"question": question, "answer": result["answer"], "page": page_nums + 1})
-                print("Chat History:", _chat_history)
-        except KeyError as e:
-            _chat_history = []
-            print("Key 'answer' not found in the dictionary result", e)
-        except Exception as e:
-            _chat_history = []
-            print("Unable to append to chat history", e)
+        if result["answer"] == "The information is not found in the PDF.":
+            page_nums = ""
+            pdf_file_name = ""
+            _chat_history.append(
+                {"question": question, "answer": result["answer"], "page": page_nums, "pdf_file_name": pdf_file_name})
+        else:
+            _chat_history.append(
+                {"question": question, "answer": result["answer"], "page": page_nums + 1, "pdf_file_name": "Purpose of Syllabus"})
+            print("Chat History:", _chat_history)
 
         return jsonify(
             {'statusCode': 200,
              "chat": _chat_history}
         )
-    else:
-        return jsonify({'statusCode': 400, 'error': 'PDF file not provided'})
 
 
 if __name__ == '__main__':

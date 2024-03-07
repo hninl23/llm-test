@@ -14,17 +14,23 @@ function App() {
 
   useEffect(() => {
     const handleResultChange = () => {
+      if (!Array.isArray(result)) {
+        console.error('Result is not an array:', result);
+        setChatHistory([]);
+      
+        return;
+      }
       const newUserMessages = [];
   
-
+      console.log(result)
       result.forEach(message => {
         if (message.question) {
-          newUserMessages.push({ text: message.question, page: ""});
+          newUserMessages.push({ text: message.question, page: "", pdf_file_name: ""});
         } 
-        if (message.answer != "The information is not found in the PDF.") {
-          newUserMessages.push({text: message.answer, page: "💬 found on page " +  message.page });
+        if (message.answer !== "The information is not found in the PDF.") {
+          newUserMessages.push({text: message.answer, page: "💬 found on page " +  message.page + " of " + message.pdf_file_name});
         } else {
-          newUserMessages.push({text: message.answer, page: message.page });
+          newUserMessages.push({text: message.answer, page: message.page, pdf_file_name: message.pdf_file_name  });
         }
 
       });
@@ -79,15 +85,14 @@ function App() {
       })
       .finally(() => {
         setLoading(false);
+        setPdfFile(null);
       });
   };
 
   const switchToFormTab = () => {
     setActiveTab('form');
   };
-  // const switchToMonitoringTab = () => {
-  //   setActiveTab('monitoring');
-  // };
+
   return (
     <div className='tot-container'>
       <h1 className='header'>LangGuard</h1>
@@ -123,10 +128,11 @@ function App() {
                   <label htmlFor="file">Select PDF File:</label>
                   <input type="file" id="file" accept=".pdf" onChange={handleFileChange} />
               </div>
-              <button className="submit-box" type="submit" disabled={!pdfFile || !userQuestion}>
+              <button className="submit-box" type="submit" >
                 Submit
               </button>
             </form>
+            <p className="notice">🚨 Note 🚨: If PDF is not uploaded, only information from the default PDF, <br/> [Purpose of Syllabus] will be available.</p>
           </div>
           <div className="chat-history-container">
             <h2 className='chat'>Chat:</h2>

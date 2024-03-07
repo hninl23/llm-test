@@ -173,6 +173,11 @@ body {
   font-size: 25px;
 
 }
+.notice {
+  text-align: center;
+  font-size: 12px;
+  color: rgb(44, 40, 40);
+}
 
 .chat-history-container ul {
   list-style-type: none;
